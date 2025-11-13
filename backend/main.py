@@ -1,6 +1,7 @@
 """
 API principale pour l'analyse automatisée de réputation en ligne
 """
+import os
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -33,29 +34,28 @@ app = FastAPI(
 )
 
 # CORS middleware
-# Permettre les origines locales et Vercel
-import os
 allowed_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
 ]
 
-# Ajouter l'origine depuis les variables d'environnement Vercel
+# Ajouter l'URL du déploiement Vercel si définie
 vercel_url = os.getenv("VERCEL_URL")
 if vercel_url:
     allowed_origins.append(f"https://{vercel_url}")
 
-# En production, permettre toutes les origines Vercel
-# Note: En production, vous pouvez aussi utiliser allow_origin_regex
-if os.getenv("VERCEL") == "1":
-    # En production Vercel, permettre toutes les origines pour simplifier
-    # Vous pouvez restreindre cela si nécessaire
-    allowed_origins = ["*"]
+# Permettre de définir des origines supplémentaires via variable d'environnement
+extra_origins = os.getenv("ADDITIONAL_ALLOWED_ORIGINS")
+if extra_origins:
+    allowed_origins.extend(
+        origin.strip() for origin in extra_origins.split(",") if origin.strip()
+    )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if allowed_origins != ["*"] else ["*"],
-    allow_credentials=True if allowed_origins != ["*"] else False,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
