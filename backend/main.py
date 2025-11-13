@@ -33,10 +33,29 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Permettre les origines locales et Vercel
+import os
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+# Ajouter l'origine depuis les variables d'environnement Vercel
+vercel_url = os.getenv("VERCEL_URL")
+if vercel_url:
+    allowed_origins.append(f"https://{vercel_url}")
+
+# En production, permettre toutes les origines Vercel
+# Note: En production, vous pouvez aussi utiliser allow_origin_regex
+if os.getenv("VERCEL") == "1":
+    # En production Vercel, permettre toutes les origines pour simplifier
+    # Vous pouvez restreindre cela si nécessaire
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
-    allow_credentials=True,
+    allow_origins=allowed_origins if allowed_origins != ["*"] else ["*"],
+    allow_credentials=True if allowed_origins != ["*"] else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

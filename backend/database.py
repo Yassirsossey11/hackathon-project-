@@ -9,7 +9,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./reputation.db")
+# Vercel Postgres utilise POSTGRES_URL, convertir en DATABASE_URL si nécessaire
+postgres_url = os.getenv("POSTGRES_URL")
+if postgres_url:
+    # Convertir POSTGRES_URL en format SQLAlchemy si nécessaire
+    if postgres_url.startswith("postgres://"):
+        # Convertir postgres:// en postgresql:// pour SQLAlchemy
+        DATABASE_URL = postgres_url.replace("postgres://", "postgresql://", 1)
+    else:
+        DATABASE_URL = postgres_url
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./reputation.db")
+
 # S'assurer que l'URL SQLite est correcte
 if DATABASE_URL and not DATABASE_URL.startswith("sqlite://") and not DATABASE_URL.startswith("postgresql://"):
     # Si ce n'est pas un format valide, utiliser la valeur par défaut
